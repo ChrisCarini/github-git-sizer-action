@@ -1,0 +1,52 @@
+name: Git Sizer Action
+description: Downloads and runs git-sizer on a target repository
+branding: 
+  icon: 'activity'
+  color: 'blue'
+
+inputs:
+  repo:
+    description: 'Git URL of the repo to analyze'
+    required: false
+    default: "https://github.com/${{ github.repository }}"
+  flags:
+    description: 'Optional flags to pass to git-sizer (e.g. `--threshold=0 --json`)'
+    required: false
+    default: ''
+
+outputs:
+  result:
+    value: ${{ steps.git-sizer.outputs.result }}
+    description: 'Output of git-sizer'
+
+runs:
+  using: composite
+  steps:
+
+    - name: Download latest git-sizer release
+      shell: bash
+      run: |
+        LATEST_URL=$(curl -s https://api.github.com/repos/github/git-sizer/releases/latest \
+          | grep "browser_download_url" \
+          | grep "linux-amd64" \
+          | cut -d '"' -f 4)
+        mkdir -p ./git-sizer-bin
+        curl -L "$LATEST_URL" -o ./git-sizer-bin/git-sizer.zip
+        unzip -d ./git-sizer-bin ./git-sizer-bin/git-sizer.zip
+        chmod +x ./git-sizer-bin/git-sizer
+        sudo mv ./git-sizer-bin/git-sizer /usr/local/bin/
+
+    - name: Clone target repo
+      shell: bash
+      run: |
+        git clone --mirror "${{ inputs.repo }}" target-repo
+
+    - name: Run git-sizer
+      id: git-sizer
+      shell: bash
+      run: |
+        pushd target-repo
+        echo "result<<'EOF'" >> $GITHUB_OUTPUT
+        git-sizer ${{ inputs.flags }} | tee -a $GITHUB_OUTPUT | tee -a $GITHUB_STEP_SUMMARY
+        echo "'EOF'" >> $GITHUB_OUTPUT
+        popd
