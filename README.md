@@ -39,7 +39,7 @@ A minimal example of a workflow step is below:
 
 ## Options
 
-This GitHub Action exposes 3 input options, only one of which is required.
+This GitHub Action exposes 2 input options, only one of which is required.
 
 |  Input  | Description                                                                                                                       |   Usage    |                     Default                     |
 |:-------:|:----------------------------------------------------------------------------------------------------------------------------------|:----------:|:-----------------------------------------------:|
