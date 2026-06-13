@@ -44,7 +44,23 @@ runs:
       shell: bash
       run: |
         pushd target-repo
+        # Capture the raw git-sizer output so it can be emitted to both the
+        # action output and the job summary without re-running the command.
+        GIT_SIZER_OUTPUT=$(git-sizer ${{ inputs.flags }})
+
+        # Print to the log for visibility.
+        echo "$GIT_SIZER_OUTPUT"
+
+        # Expose the raw output as the action's `result` output.
         echo "result<<'EOF'" >> $GITHUB_OUTPUT
-        git-sizer ${{ inputs.flags }} | tee -a $GITHUB_OUTPUT | tee -a $GITHUB_STEP_SUMMARY
+        echo "$GIT_SIZER_OUTPUT" >> $GITHUB_OUTPUT
         echo "'EOF'" >> $GITHUB_OUTPUT
+
+        # git-sizer's table is not markdown-friendly, so wrap it in a code
+        # fence to ensure it renders correctly in the job summary.
+        {
+          echo '```'
+          echo "$GIT_SIZER_OUTPUT"
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
         popd
